@@ -2,7 +2,7 @@
 set -xeuo pipefail
 
 project_name='DAPO'
-exp_name='DAPO-Qwen2.5-7b-MATH-0527a1-one-step-off'
+exp_name='DAPO-Qwen2.5-7b-MATH-0527a1-one-step-off-4-12'
 
 adv_estimator=grpo
 
@@ -48,16 +48,14 @@ top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 val_top_p=0.7
 
 # Performance Related Parameter
-sp_size=4
 use_dynamic_bsz=True
 actor_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 2))
 infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 ref_offload=True
 actor_offload=False
 gen_tp=2
+sp_size=4
 fsdp_size=2
-
-# reference run wandb: https://wandb.ai/verl-org/DAPO%20Reproduction%20on%20verl/runs/ow47vvon?nw=nwusertongyuxuan361
 
 python3 -m recipe.one_step_off_policy.async_main_ppo \
     data.train_files="${TRAIN_FILE}" \
