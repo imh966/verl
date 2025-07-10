@@ -51,9 +51,9 @@ use_dynamic_bsz=True
 actor_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 2))
 infer_ppo_max_token_len=$(((max_prompt_length + max_response_length) * 3))
 offload=True
-gen_tp=4
-train_tp=4
-train_pp=1
+gen_tp=2
+train_tp=2
+train_pp=2
 
 # TODO: support dynamic_bsz for megatron
 # actor_rollout_ref.actor.use_dynamic_bsz=${use_dynamic_bsz} \

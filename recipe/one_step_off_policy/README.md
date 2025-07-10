@@ -1,6 +1,7 @@
 # Recipe: One Step Off Policy Async Trainer
 
-**Author:**  `ZhengGang Hou <https://github.com/ArronHZG>` `Pu Wang <https://github.com/lalala-2>` `MinCong Huang <https://github.com/imh966>`
+**Author:**  `ZhengGang Hou <https://github.com/ArronHZG>` `Pu Wang <https://github.com/lalala-2>`
+`MinCong Huang <https://github.com/imh966>`
 
 Last updated: 07/10/2025.
 
@@ -44,24 +45,25 @@ policy. Our core contributions include:
     - Training: 12 GPUs
 - **Model**: Qwen2.5-Math-7B
 - **Rollout Configuration**:
-- **Max Response Length**: 20,000 tokens
+- **Max Response Length**: 8,000 tokens
 - **Algorithm**: DAPO
 - **Rollout Engine**: vLLM
 
-| training mode          | engine        | step | gen | wait_prev_gen | generate_sequences | old_log_prob | update_actor | total time   | acc/best@32/mean | acc/maj@32/mean |
-|------------------------|---------------|------|-----|---------------|--------------------|--------------|--------------|--------------|------------------|-----------------|
-| colocate sync          | VLLM+FSDP2    | 749  | 321 | -             | 247                | 88           | 286          | 19h18m       | 0.5948           | 0.417           |
-| one-step-overlap async | VLLM+FSDP2    | 520  | -   | 45            | 458                | 108          | 337          | 15h34m（+23%） | 0.6165           | 0.494           |
-| colocate sync          | VLLM+Megatron | 805  | 272 | -             | 234                | 125          | 379          | 20h41m       | 0.5830           | 0.3623          |
-| one-step-overlap async | VLLM+Megatron |      |     |               |                    |              |              |              |                  |                 |
+| training mode          | engine        | step | gen | wait_prev_gen | generate_sequences | old_log_prob | update_actor | total time    | acc/best@32/mean | acc/maj@32/mean |
+|------------------------|---------------|------|-----|---------------|--------------------|--------------|--------------|---------------|------------------|-----------------|
+| colocate sync          | VLLM+FSDP2    | 749  | 321 | -             | 247                | 88           | 286          | 19h18m        | 0.5948           | 0.417           |
+| one-step-overlap async | VLLM+FSDP2    | 520  | -   | 45            | 458                | 108          | 337          | 15h34m（+23%）  | 0.6165           | 0.494           |
+| colocate sync          | VLLM+Megatron | 805  | 272 | -             | 234                | 125          | 379          | 20h41m        | 0.5830           | 0.3623          |
+| one-step-overlap async | VLLM+Megatron | 485  | -   | 41            | 437                | 110          | 313          | 13h1m  (+62%) | 0.5938           | 0.4359          |
 
 ## Implementation
 
 ### One Step Off Policy Async Pipline
 
-Our implemented **One Step Off Policy Async Pipeline** integrates seamlessly into existing training logic at minimal cost,
-eliminating the need for additional sample storage management. The core mechanism uses `async_gen_next_batch` 
-for asynchronous rollout generation while maintaining continuous operation during epoch transitions 
+Our implemented **One Step Off Policy Async Pipeline** integrates seamlessly into existing training logic at minimal
+cost,
+eliminating the need for additional sample storage management. The core mechanism uses `async_gen_next_batch`
+for asynchronous rollout generation while maintaining continuous operation during epoch transitions
 via `create_continuous_iterator`.
 
 ```python
@@ -113,13 +115,12 @@ while batch_data_future is not None:
 
 ### Parameter Synchronization
 
-The exciting point is that our nccl based weights updating for rollout model has great performance. 
-At most of time, the latency is under 300ms, which is negligible for RLHF. 
+The exciting point is that our nccl based weights updating for rollout model has great performance.
+At most of time, the latency is under 300ms, which is negligible for RLHF.
 Although it is only implemented with fsdp and vllm now, we think it is not complex to extend it to the other backend.
 
-> **sync_rollout_weights**：The time for synchronizing parameters from actor to rollout is extremely fast and can almost 
+> **sync_rollout_weights**：The time for synchronizing parameters from actor to rollout is extremely fast and can almost
 > be ignored because it is implemented with nccl.
-
 
 ```python
 class ActorRolloutRefWorker:
@@ -241,7 +242,8 @@ python3 -m recipe.one_step_off_policy.async_main_ppo \
     - **Adjustment strategy**:
         - High `wait_prev_gen` + uniform sequence lengths → Increase rollout resources
         - High `wait_prev_gen` + long-tail sequences → Optimize stopping criteria (resource increase won't help)
-   > **wait_prev_gen**：The time consumed waiting for the previous rollout to end (the part that is not fully overlapped).
+   > **wait_prev_gen**：The time consumed waiting for the previous rollout to end (the part that is not fully
+   overlapped).
 
 ## Functional Support
 
