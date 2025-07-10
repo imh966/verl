@@ -15,7 +15,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 
 max_prompt_length=$((1024 * 2))
-max_response_length=$((1024 * 15))
+max_response_length=$((1024 * 8))
 enable_overlong_buffer=True
 overlong_buffer_len=$((1024 * 4))
 overlong_penalty_factor=1.0
@@ -36,10 +36,10 @@ NGPUS_PER_NODE=${NGPUS_PER_NODE:-8}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"${HOME}/verl"}
 # very important! please modify the max_position_embeddings in config.json to 32768 after downloading from huggingface
-MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/Qwen2.5-Math-7B"}
-CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
-TRAIN_FILE=${TRAIN_FILE:-"${RAY_DATA_HOME}/data/dapo-math-17k.parquet"}
-TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024.parquet"}
+MODEL_PATH=/mnt/dolphinfs/hdd_pool/docker/share/houzhenggang/modelscope/hub/models/Qwen/Qwen2___5-Math-7B
+CKPTS_DIR=./ckpts/${project_name}/${exp_name}
+TRAIN_FILE=/mnt/dolphinfs/hdd_pool/docker/share/huangmincong/huggingface.co/datasets/BytedTsinghua-SIA/DAPO-Math-17k/data/dapo-math-17k.parquet
+TEST_FILE=/mnt/dolphinfs/hdd_pool/docker/share/huangmincong/huggingface.co/datasets/BytedTsinghua-SIA/AIME-2024/data/aime-2024.parquet
 
 # Algorithm
 temperature=1.0
@@ -55,7 +55,7 @@ ref_offload=True
 actor_offload=False
 gen_tp=2
 train_tp=2
-train_pp=1
+train_pp=2
 
 # TODO: support dynamic_bsz for megatron
 # actor_rollout_ref.actor.use_dynamic_bsz=${use_dynamic_bsz} \
